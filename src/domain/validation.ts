@@ -7,6 +7,7 @@ import type {
   StudentProfile,
   Subject,
 } from './academic'
+import { convertCourseScore } from './grading'
 
 export class DomainValidationError extends Error {
   constructor(message: string) {
@@ -42,6 +43,14 @@ function validateDate(value: string | undefined, fieldName: string): void {
 export function validateStudentProfile(profile: StudentProfile): void {
   requireId(profile.id, 'Student profile id')
   requireText(profile.name, 'Student profile name')
+  if (
+    profile.overallGpa !== undefined &&
+    (!Number.isFinite(profile.overallGpa) ||
+      profile.overallGpa < 0 ||
+      profile.overallGpa > 4)
+  ) {
+    throw new DomainValidationError('Overall GPA must be between 0 and 4')
+  }
 }
 
 export function validateAcademicProgram(program: AcademicProgram): void {
@@ -93,5 +102,24 @@ export function validateGrade(grade: Grade): void {
     !Number.isFinite(grade.numericGrade)
   ) {
     throw new DomainValidationError('Numeric grade must be a finite number')
+  }
+  if (grade.originalScore !== undefined) {
+    const conversion = convertCourseScore(grade.originalScore)
+    if (
+      grade.letterGrade !== undefined &&
+      grade.letterGrade !== conversion.letterGrade
+    ) {
+      throw new DomainValidationError(
+        'Letter grade does not match the course score',
+      )
+    }
+    if (
+      grade.fourPointValue !== undefined &&
+      grade.fourPointValue !== conversion.fourPointValue
+    ) {
+      throw new DomainValidationError(
+        'Four-point grade value does not match the course score',
+      )
+    }
   }
 }

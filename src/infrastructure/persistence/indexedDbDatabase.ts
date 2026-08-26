@@ -1,7 +1,7 @@
 import type { PersistenceDatabase } from '../../application/ports/persistence'
 
 export const databaseName = 'academic-os'
-export const databaseVersion = 2
+export const databaseVersion = 3
 
 export const academicStores = [
   'studentProfiles',
@@ -17,6 +17,7 @@ export type AcademicStoreName = (typeof academicStores)[number]
 
 export class IndexedDbDatabase implements PersistenceDatabase {
   private connection?: IDBDatabase
+  private opening?: Promise<void>
 
   open(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -25,34 +26,44 @@ export class IndexedDbDatabase implements PersistenceDatabase {
         return
       }
 
-      const request = indexedDB.open(databaseName, databaseVersion)
+      if (this.opening) {
+        this.opening.then(resolve, reject)
+        return
+      }
 
-      request.onerror = () => reject(request.error)
-      request.onupgradeneeded = () => {
-        const database = request.result
-        for (const storeName of academicStores) {
-          if (!database.objectStoreNames.contains(storeName)) {
-            const store = database.createObjectStore(storeName, {
-              keyPath: 'id',
-            })
-            if (storeName === 'semesters')
-              store.createIndex('academicYearId', 'academicYearId')
-            if (storeName === 'subjects')
-              store.createIndex('academicProgramId', 'academicProgramId')
-            if (storeName === 'enrollments') {
-              store.createIndex('subjectId', 'subjectId')
-              store.createIndex('semesterId', 'semesterId')
+      const request = indexedDB.open(databaseName, databaseVersion)
+      this.opening = new Promise<void>((openResolve, openReject) => {
+        request.onerror = () => openReject(request.error)
+        request.onupgradeneeded = () => {
+          const database = request.result
+          for (const storeName of academicStores) {
+            if (!database.objectStoreNames.contains(storeName)) {
+              const store = database.createObjectStore(storeName, {
+                keyPath: 'id',
+              })
+              if (storeName === 'semesters')
+                store.createIndex('academicYearId', 'academicYearId')
+              if (storeName === 'subjects')
+                store.createIndex('academicProgramId', 'academicProgramId')
+              if (storeName === 'enrollments') {
+                store.createIndex('subjectId', 'subjectId')
+                store.createIndex('semesterId', 'semesterId')
+              }
+              if (storeName === 'grades')
+                store.createIndex('enrollmentId', 'enrollmentId')
             }
-            if (storeName === 'grades')
-              store.createIndex('enrollmentId', 'enrollmentId')
           }
         }
-      }
-      request.onsuccess = () => {
-        this.connection = request.result
-        this.connection.onversionchange = () => this.close()
-        resolve()
-      }
+        request.onsuccess = () => {
+          this.connection = request.result
+          this.connection.onversionchange = () => this.close()
+          openResolve()
+        }
+      }).finally(() => {
+        this.opening = undefined
+      })
+
+      this.opening.then(resolve, reject)
     })
   }
 
@@ -97,9 +108,15 @@ export class IndexedDbDatabase implements PersistenceDatabase {
     return new Promise((resolve, reject) => {
       const transaction = this.connection!.transaction(storeName, mode)
       const request = operation(transaction.objectStore(storeName))
+      let result: T
+
       request.onerror = () => reject(request.error)
-      request.onsuccess = () => resolve(request.result)
+      request.onsuccess = () => {
+        result = request.result
+      }
+      transaction.oncomplete = () => resolve(result)
       transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
     })
   }
 }

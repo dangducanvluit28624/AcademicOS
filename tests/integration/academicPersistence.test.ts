@@ -1,6 +1,8 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  IndexedDbGradeRepository,
+  IndexedDbStudentProfileRepository,
   IndexedDbAcademicYearRepository,
   IndexedDbEnrollmentRepository,
   IndexedDbSemesterRepository,
@@ -95,6 +97,92 @@ describe('academic IndexedDB persistence', () => {
         status: 'planned',
       }),
     ).rejects.toThrow('Subject missing does not exist')
+    database.close()
+  })
+
+  it('rejects a second planned or in-progress enrollment for the same subject and semester', async () => {
+    const database = new IndexedDbDatabase()
+    const years = new IndexedDbAcademicYearRepository(database)
+    const semesters = new IndexedDbSemesterRepository(database)
+    const subjects = new IndexedDbSubjectRepository(database)
+    const enrollments = new IndexedDbEnrollmentRepository(database)
+
+    await years.save({ id: 'year-1', label: '2026-2027' })
+    await semesters.save({
+      id: 'semester-1',
+      academicYearId: 'year-1',
+      name: 'Fall',
+      status: 'active',
+    })
+    await subjects.save({ id: 'subject-1', name: 'Algorithms', credits: 3 })
+    await enrollments.save({
+      id: 'enrollment-1',
+      subjectId: 'subject-1',
+      semesterId: 'semester-1',
+      status: 'planned',
+    })
+
+    await expect(
+      enrollments.save({
+        id: 'enrollment-2',
+        subjectId: 'subject-1',
+        semesterId: 'semester-1',
+        status: 'in-progress',
+      }),
+    ).rejects.toThrow('An active enrollment already exists')
+    database.close()
+  })
+
+  it('persists the user-provided overall GPA without calculating it', async () => {
+    const database = new IndexedDbDatabase()
+    const profiles = new IndexedDbStudentProfileRepository(database)
+    const profile = {
+      id: 'profile-1',
+      name: 'Ada Student',
+      overallGpa: 3.42,
+    }
+
+    await profiles.save(profile)
+
+    await expect(profiles.get(profile.id)).resolves.toEqual(profile)
+    database.close()
+  })
+
+  it('persists a converted course grade alongside its original score', async () => {
+    const database = new IndexedDbDatabase()
+    const years = new IndexedDbAcademicYearRepository(database)
+    const semesters = new IndexedDbSemesterRepository(database)
+    const subjects = new IndexedDbSubjectRepository(database)
+    const enrollments = new IndexedDbEnrollmentRepository(database)
+    const grades = new IndexedDbGradeRepository(database)
+
+    await years.save({ id: 'year-1', label: '2026-2027' })
+    await semesters.save({
+      id: 'semester-1',
+      academicYearId: 'year-1',
+      name: 'Fall',
+      status: 'active',
+    })
+    await subjects.save({ id: 'subject-1', name: 'Algorithms', credits: 3 })
+    await enrollments.save({
+      id: 'enrollment-1',
+      subjectId: 'subject-1',
+      semesterId: 'semester-1',
+      status: 'completed',
+    })
+    const grade = {
+      id: 'grade-1',
+      enrollmentId: 'enrollment-1',
+      value: '8.5',
+      originalScore: 8.5,
+      letterGrade: 'B+',
+      fourPointValue: 3.5,
+      finalized: true,
+    }
+
+    await grades.save(grade)
+
+    await expect(grades.get(grade.id)).resolves.toEqual(grade)
     database.close()
   })
 })

@@ -134,6 +134,25 @@ export class IndexedDbEnrollmentRepository implements EnrollmentRepository {
       throw new Error(`Subject ${enrollment.subjectId} does not exist`)
     if (!semester)
       throw new Error(`Semester ${enrollment.semesterId} does not exist`)
+    if (
+      enrollment.status === 'planned' ||
+      enrollment.status === 'in-progress'
+    ) {
+      const existingEnrollments =
+        await this.database.list<Enrollment>('enrollments')
+      const duplicate = existingEnrollments.find(
+        (existing) =>
+          existing.id !== enrollment.id &&
+          existing.subjectId === enrollment.subjectId &&
+          existing.semesterId === enrollment.semesterId &&
+          (existing.status === 'planned' || existing.status === 'in-progress'),
+      )
+      if (duplicate) {
+        throw new Error(
+          'An active enrollment already exists for this subject and semester',
+        )
+      }
+    }
     await this.database.save('enrollments', enrollment)
   }
 }

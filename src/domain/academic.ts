@@ -14,6 +14,7 @@ export interface StudentProfile {
   major?: string
   expectedGraduationPeriod?: string
   academicStatus?: string
+  overallGpa?: number
 }
 
 export interface AcademicProgram {
@@ -66,6 +67,8 @@ export interface Grade {
   scale?: string
   letterGrade?: string
   numericGrade?: number
+  originalScore?: number
+  fourPointValue?: number
   status?: string
   finalized: boolean
 }
