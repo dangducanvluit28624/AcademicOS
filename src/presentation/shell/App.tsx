@@ -1,5 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { convertCourseScore } from '../../domain'
+import type { GradeConversion } from '../../domain'
+import type { AnalyticsRepositories, DashboardSummary } from '../../application'
+import { getDashboardSummary } from '../../application'
 import type {
   AcademicProgram,
   AcademicYear,
@@ -9,29 +12,32 @@ import type {
   StudentProfile,
   Subject,
 } from '../../domain'
-import {
-  IndexedDbAcademicProgramRepository,
-  IndexedDbAcademicYearRepository,
-  IndexedDbEnrollmentRepository,
-  IndexedDbGradeRepository,
-  IndexedDbSemesterRepository,
-  IndexedDbStudentProfileRepository,
-  IndexedDbSubjectRepository,
-} from '../../infrastructure/persistence/academicRepositories'
-import { IndexedDbDatabase } from '../../infrastructure/persistence/indexedDbDatabase'
-
-const database = new IndexedDbDatabase()
-const profiles = new IndexedDbStudentProfileRepository(database)
-const programs = new IndexedDbAcademicProgramRepository(database)
-const years = new IndexedDbAcademicYearRepository(database)
-const semesters = new IndexedDbSemesterRepository(database)
-const subjects = new IndexedDbSubjectRepository(database)
-const enrollments = new IndexedDbEnrollmentRepository(database)
-const grades = new IndexedDbGradeRepository(database)
-
 const id = () => crypto.randomUUID()
 
-export function App() {
+function describeAnalyticsStatus(status: string): string {
+  if (status === 'Incomplete')
+    return 'Required academic information is missing or unresolved.'
+  if (status === 'Unavailable')
+    return 'This metric cannot be calculated from the available information.'
+  if (status === 'Data integrity issue')
+    return 'Academic data needs review because source records conflict or are invalid.'
+  return 'This calculation uses sufficient valid academic data.'
+}
+
+export interface AppProps {
+  repositories: AnalyticsRepositories
+}
+
+export function App({ repositories }: AppProps) {
+  const {
+    profiles,
+    programs,
+    years,
+    semesters,
+    subjects,
+    enrollments,
+    grades,
+  } = repositories
   const [profile, setProfile] = useState<StudentProfile>({
     id: 'student-profile',
     name: '',
@@ -72,22 +78,17 @@ export function App() {
     grades: [] as Grade[],
   })
   const [message, setMessage] = useState('')
+  const [dashboard, setDashboard] = useState<DashboardSummary>()
 
-  async function reload() {
-    setRecords({
-      profiles: await profiles.list(),
-      programs: await programs.list(),
-      years: await years.list(),
-      semesters: await semesters.list(),
-      subjects: await subjects.list(),
-      enrollments: await enrollments.list(),
-      grades: await grades.list(),
-    })
-  }
+  const reload = useCallback(async () => {
+    const nextDashboard = await getDashboardSummary(repositories)
+    setRecords(nextDashboard.sourceRecords)
+    setDashboard(nextDashboard)
+  }, [repositories])
 
   useEffect(() => {
     void reload()
-  }, [])
+  }, [reload])
 
   async function save(event: FormEvent, action: () => Promise<void>) {
     event.preventDefault()
@@ -101,12 +102,20 @@ export function App() {
   }
 
   const score = grade.originalScore
-  const conversion = score === undefined ? undefined : convertCourseScore(score)
+  let conversion: GradeConversion | undefined
+  let conversionError = ''
+  if (score !== undefined) {
+    try {
+      conversion = convertCourseScore(score)
+    } catch (error) {
+      conversionError = error instanceof Error ? error.message : 'Invalid score'
+    }
+  }
 
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: 32 }}>
       <header>
-        <p>ACADEMIC OS / M2</p>
+        <p>ACADEMIC OS</p>
         <h1>Academic OS</h1>
         <h2>Academic record workspace</h2>
         <p>
@@ -115,6 +124,120 @@ export function App() {
         </p>
         <strong role="status">{message}</strong>
       </header>
+
+      <section aria-labelledby="dashboard-heading">
+        <h2 id="dashboard-heading">Academic dashboard</h2>
+        <p>Official GPA: {dashboard?.profile?.overallGpa ?? 'Not provided'}</p>
+        <p>
+          Calculated GPA:{' '}
+          {dashboard?.calculatedGpa.status === 'Available'
+            ? dashboard.calculatedGpa.value?.toFixed(2)
+            : (dashboard?.calculatedGpa.status ?? 'Unavailable')}
+        </p>
+        <p>
+          Credit progress: {dashboard?.creditProgress.completedCredits ?? 0}{' '}
+          completed / {dashboard?.creditProgress.attemptedCredits ?? 0}{' '}
+          attempted
+          {dashboard?.creditProgress.remainingCredits !== undefined &&
+            ` / ${dashboard.creditProgress.remainingCredits} remaining`}
+        </p>
+        <p>
+          Remaining credits:{' '}
+          {dashboard?.creditProgress.remainingCredits ?? 'Unavailable'}
+        </p>
+        <p>
+          Completion percentage:{' '}
+          {dashboard?.creditProgress.completionPercentage !== undefined
+            ? `${dashboard.creditProgress.completionPercentage.toFixed(2)}%`
+            : 'Unavailable'}
+        </p>
+        <p>
+          GPA status: {dashboard?.calculatedGpa.status ?? 'Unavailable'}.{' '}
+          {describeAnalyticsStatus(
+            dashboard?.calculatedGpa.status ?? 'Unavailable',
+          )}
+        </p>
+        <p>
+          Current semester: {dashboard?.currentSemester?.name ?? 'Not selected'}
+        </p>
+        {dashboard?.integrityIssueRecordIds.length ? (
+          <p role="alert">
+            Academic data needs review for{' '}
+            {dashboard.integrityIssueRecordIds.length} source record(s).
+          </p>
+        ) : null}
+        <table>
+          <caption>GPA and credit trends</caption>
+          <thead>
+            <tr>
+              <th>Semester</th>
+              <th>GPA</th>
+              <th>Completed credits</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dashboard?.trends.points.map((trend) => (
+              <tr key={trend.semesterId}>
+                <td>{trend.semesterLabel}</td>
+                <td>{trend.gpa.value?.toFixed(2) ?? trend.gpa.status}</td>
+                <td>{trend.accumulatedCompletedCredits}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p>
+          Trend status: {dashboard?.trends.status ?? 'Unavailable'}.{' '}
+          {describeAnalyticsStatus(dashboard?.trends.status ?? 'Unavailable')}
+        </p>
+        <table>
+          <caption>Semester performance</caption>
+          <thead>
+            <tr>
+              <th>Semester</th>
+              <th>GPA</th>
+              <th>Attempted credits</th>
+              <th>Completed credits</th>
+              <th>Completed subjects</th>
+              <th>Failed subjects</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dashboard?.semesterPerformance.map((performance) => (
+              <tr key={performance.semester.id}>
+                <td>{performance.semester.name}</td>
+                <td>
+                  {performance.gpa.value?.toFixed(2) ?? performance.gpa.status}
+                </td>
+                <td>{performance.attemptedCredits}</td>
+                <td>{performance.completedCredits}</td>
+                <td>{performance.completedSubjectCount}</td>
+                <td>{performance.failedSubjectCount}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <table>
+          <caption>Subject performance</caption>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Semester</th>
+              <th>Status</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dashboard?.subjectPerformance.map((item) => (
+              <tr key={item.enrollment.id}>
+                <td>{item.subject.name}</td>
+                <td>{item.semester.name}</td>
+                <td>{item.status}</td>
+                <td>{item.grade?.letterGrade ?? 'Not available'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
 
       <section>
         <h2>Student profile</h2>
@@ -352,7 +475,7 @@ export function App() {
             aria-label="Grade enrollment"
             value={grade.enrollmentId}
             onChange={(event) =>
-              setGrade({ ...grade, enrollmentId: event.target.value })
+              setGrade({ ...grade, id: '', enrollmentId: event.target.value })
             }
             required
           >
@@ -360,6 +483,23 @@ export function App() {
             {records.enrollments.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.id}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Existing grade"
+            value={grade.id}
+            onChange={(event) => {
+              const selected = records.grades.find(
+                (item) => item.id === event.target.value,
+              )
+              if (selected) setGrade(selected)
+            }}
+          >
+            <option value="">New grade</option>
+            {records.grades.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.id} ({item.letterGrade ?? 'ungraded'})
               </option>
             ))}
           </select>
@@ -381,6 +521,17 @@ export function App() {
             }
             required
           />
+          <label>
+            Finalized
+            <input
+              aria-label="Grade finalized"
+              type="checkbox"
+              checked={grade.finalized}
+              onChange={(event) =>
+                setGrade({ ...grade, finalized: event.target.checked })
+              }
+            />
+          </label>
           <button type="submit">Save grade</button>
           {conversion && (
             <output>
@@ -388,6 +539,7 @@ export function App() {
               {conversion.letterGrade} / {conversion.fourPointValue.toFixed(1)}
             </output>
           )}
+          {conversionError && <span role="alert">{conversionError}</span>}
         </form>
       </section>
 

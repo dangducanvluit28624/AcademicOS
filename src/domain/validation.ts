@@ -122,4 +122,19 @@ export function validateGrade(grade: Grade): void {
       )
     }
   }
+  if (
+    grade.fourPointValue !== undefined &&
+    (!Number.isFinite(grade.fourPointValue) ||
+      grade.fourPointValue < 0 ||
+      grade.fourPointValue > 4)
+  ) {
+    throw new DomainValidationError(
+      'Four-point grade value must be between 0 and 4',
+    )
+  }
+  if (grade.finalized && !grade.letterGrade?.trim()) {
+    throw new DomainValidationError(
+      'Finalized grade must include a letter grade',
+    )
+  }
 }
