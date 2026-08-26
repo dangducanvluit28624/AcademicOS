@@ -48,7 +48,7 @@ src/
   domain/                 Framework-independent academic rules and types
   application/            Use cases and ports
   infrastructure/         Technical implementations
-    persistence/          IndexedDB implementation boundary
+    persistence/          IndexedDB schema and repository implementations
   presentation/           React shell and future UI modules
 tests/
   unit/
@@ -61,6 +61,8 @@ scripts/                   Development scripts
 ```
 
 The dependency direction is Presentation -> Application -> Domain -> Repository Interfaces -> Infrastructure/Persistence -> IndexedDB. UI code does not access IndexedDB directly, and the domain remains independent of React and browser APIs.
+
+M1 IndexedDB schema version 2 contains stores for student profiles, academic programs, academic years, semesters, subjects, enrollments, and grades. Repository writes validate records and explicit references before saving.
 
 ## M0 Scope
 
