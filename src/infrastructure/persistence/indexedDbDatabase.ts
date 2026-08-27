@@ -1,7 +1,7 @@
 import type { PersistenceDatabase } from '../../application/ports/persistence'
 
 export const databaseName = 'academic-os'
-export const databaseVersion = 3
+export const databaseVersion = 4
 
 export const academicStores = [
   'studentProfiles',
@@ -11,6 +11,8 @@ export const academicStores = [
   'subjects',
   'enrollments',
   'grades',
+  'tasks',
+  'academicEvents',
 ] as const
 
 export type AcademicStoreName = (typeof academicStores)[number]

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
 import { convertCourseScore } from '../../domain'
 import type { GradeConversion } from '../../domain'
 import type { AnalyticsRepositories, DashboardSummary } from '../../application'
@@ -26,9 +32,10 @@ function describeAnalyticsStatus(status: string): string {
 
 export interface AppProps {
   repositories: AnalyticsRepositories
+  planner?: ReactNode
 }
 
-export function App({ repositories }: AppProps) {
+export function App({ repositories, planner }: AppProps) {
   const {
     profiles,
     programs,
@@ -238,6 +245,8 @@ export function App({ repositories }: AppProps) {
           </tbody>
         </table>
       </section>
+
+      {planner}
 
       <section>
         <h2>Student profile</h2>

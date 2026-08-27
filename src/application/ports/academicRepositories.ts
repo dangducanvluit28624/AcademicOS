@@ -49,3 +49,17 @@ export interface GradeRepository {
   list(): Promise<Grade[]>
   save(grade: Grade): Promise<void>
 }
+
+import type { AcademicEvent, Task } from '../../domain'
+
+export interface TaskRepository {
+  get(id: string): Promise<Task | undefined>
+  list(): Promise<Task[]>
+  save(task: Task): Promise<void>
+}
+
+export interface AcademicEventRepository {
+  get(id: string): Promise<AcademicEvent | undefined>
+  list(): Promise<AcademicEvent[]>
+  save(event: AcademicEvent): Promise<void>
+}

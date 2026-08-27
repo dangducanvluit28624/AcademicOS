@@ -12,6 +12,11 @@ import {
 import { initializeApplication } from './application/initializeApplication'
 import { IndexedDbDatabase } from './infrastructure/persistence/indexedDbDatabase'
 import { App } from './presentation/shell/App'
+import { Planner } from './presentation/planner/Planner'
+import {
+  IndexedDbAcademicEventRepository,
+  IndexedDbTaskRepository,
+} from './infrastructure/persistence/plannerRepositories'
 
 async function startApplication() {
   const database = new IndexedDbDatabase()
@@ -25,10 +30,21 @@ async function startApplication() {
     enrollments: new IndexedDbEnrollmentRepository(database),
     grades: new IndexedDbGradeRepository(database),
   }
+  const plannerRepositories = {
+    tasks: new IndexedDbTaskRepository(database, repositories.subjects),
+    events: new IndexedDbAcademicEventRepository(
+      database,
+      repositories.subjects,
+    ),
+    subjects: repositories.subjects,
+  }
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <App repositories={repositories} />
+      <App
+        repositories={repositories}
+        planner={<Planner repositories={plannerRepositories} />}
+      />
     </StrictMode>,
   )
 }
