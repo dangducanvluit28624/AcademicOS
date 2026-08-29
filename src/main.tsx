@@ -43,6 +43,8 @@ async function startApplication() {
     <StrictMode>
       <App
         repositories={repositories}
+        plannerRepositories={plannerRepositories}
+        database={database}
         planner={<Planner repositories={plannerRepositories} />}
       />
     </StrictMode>,

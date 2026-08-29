@@ -94,6 +94,36 @@ export class IndexedDbDatabase implements PersistenceDatabase {
     )
   }
 
+  async replaceData(data: Record<string, unknown[]>): Promise<void> {
+    await this.open()
+    if (!this.connection) throw new Error('Database is not open')
+
+    return new Promise((resolve, reject) => {
+      // Create a readwrite transaction across all stores
+      const transaction = this.connection!.transaction(
+        academicStores,
+        'readwrite',
+      )
+
+      transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
+      transaction.oncomplete = () => resolve()
+
+      // For each store, clear it and populate with new data
+      for (const storeName of academicStores) {
+        const store = transaction.objectStore(storeName)
+        const clearRequest = store.clear()
+
+        clearRequest.onsuccess = () => {
+          const records = data[storeName] || []
+          for (const record of records) {
+            store.put(record)
+          }
+        }
+      }
+    })
+  }
+
   close(): void {
     this.connection?.close()
     this.connection = undefined

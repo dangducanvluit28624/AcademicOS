@@ -7,8 +7,14 @@ import {
 } from 'react'
 import { convertCourseScore } from '../../domain'
 import type { GradeConversion } from '../../domain'
-import type { AnalyticsRepositories, DashboardSummary } from '../../application'
+import type {
+  AnalyticsRepositories,
+  DashboardSummary,
+  PlannerRepositories,
+} from '../../application'
 import { getDashboardSummary } from '../../application'
+import type { PersistenceDatabase } from '../../application/ports/persistence'
+import { BackupRestore } from '../backup/BackupRestore'
 import type {
   AcademicProgram,
   AcademicYear,
@@ -32,10 +38,17 @@ function describeAnalyticsStatus(status: string): string {
 
 export interface AppProps {
   repositories: AnalyticsRepositories
+  plannerRepositories: PlannerRepositories
+  database: PersistenceDatabase
   planner?: ReactNode
 }
 
-export function App({ repositories, planner }: AppProps) {
+export function App({
+  repositories,
+  plannerRepositories,
+  database,
+  planner,
+}: AppProps) {
   const {
     profiles,
     programs,
@@ -565,6 +578,13 @@ export function App({ repositories, planner }: AppProps) {
           unavailable.
         </p>
       </section>
+
+      <BackupRestore
+        repositories={repositories}
+        plannerRepositories={plannerRepositories}
+        database={database}
+        onRestoreComplete={reload}
+      />
     </main>
   )
 }
