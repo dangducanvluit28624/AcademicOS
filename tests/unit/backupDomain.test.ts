@@ -22,6 +22,7 @@ describe('M5 backup domain validation', () => {
         grades: [],
         tasks: [],
         academicEvents: [],
+        goals: [],
       },
     }
     expect(() => validateBackupEnvelope(validEnvelope)).not.toThrow()
@@ -44,12 +45,12 @@ describe('M5 backup domain validation', () => {
     const invalidEnvelope = {
       formatVersion: 1,
       application: { name: 'Academic OS' },
-      database: { schemaVersion: 5 },
+      database: { schemaVersion: 6 },
       createdAt: '2026-01-01T00:00:00.000Z',
       data: {},
     }
     expect(() => validateBackupEnvelope(invalidEnvelope)).toThrow(
-      'Unsupported database schema version: 5',
+      'Unsupported database schema version: 6',
     )
   })
 
@@ -64,6 +65,7 @@ describe('M5 backup domain validation', () => {
       grades: [],
       tasks: {}, // Not an array
       academicEvents: [],
+      goals: [],
     }
     expect(() =>
       validateBackupData(invalidData as unknown as BackupData),
@@ -81,6 +83,7 @@ describe('M5 backup domain validation', () => {
       grades: [],
       tasks: [],
       academicEvents: [],
+      goals: [],
     }
     expect(() =>
       validateBackupData(invalidData as unknown as BackupData),
@@ -105,6 +108,7 @@ describe('M5 backup domain validation', () => {
       grades: [],
       tasks: [],
       academicEvents: [],
+      goals: [],
     }
     expect(() => validateCrossReferences(dataWithBrokenReference)).toThrow(
       'Enrollment e1 references missing subject missing-subject',

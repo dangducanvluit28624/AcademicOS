@@ -12,9 +12,11 @@ import type {
   DashboardSummary,
   PlannerRepositories,
 } from '../../application'
+import type { GoalRepositories } from '../../application/ports/goalRepositories'
 import { getDashboardSummary } from '../../application'
 import type { PersistenceDatabase } from '../../application/ports/persistence'
 import { BackupRestore } from '../backup/BackupRestore'
+import { GoalsDashboard } from '../goals/GoalsDashboard'
 import type {
   AcademicProgram,
   AcademicYear,
@@ -39,6 +41,7 @@ function describeAnalyticsStatus(status: string): string {
 export interface AppProps {
   repositories: AnalyticsRepositories
   plannerRepositories: PlannerRepositories
+  goalRepositories: GoalRepositories
   database: PersistenceDatabase
   planner?: ReactNode
 }
@@ -46,6 +49,7 @@ export interface AppProps {
 export function App({
   repositories,
   plannerRepositories,
+  goalRepositories,
   database,
   planner,
 }: AppProps) {
@@ -258,6 +262,11 @@ export function App({
           </tbody>
         </table>
       </section>
+
+      <GoalsDashboard
+        analyticsRepositories={repositories}
+        goalRepositories={goalRepositories}
+      />
 
       {planner}
 
@@ -582,6 +591,7 @@ export function App({
       <BackupRestore
         repositories={repositories}
         plannerRepositories={plannerRepositories}
+        goalRepositories={goalRepositories}
         database={database}
         onRestoreComplete={reload}
       />

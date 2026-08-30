@@ -1,5 +1,6 @@
 import type { AnalyticsRepositories } from './index'
 import type { PlannerRepositories } from './planner'
+import type { GoalRepositories } from './ports/goalRepositories'
 import type { PersistenceDatabase } from './ports/persistence'
 import type { BackupEnvelope } from '../domain'
 import {
@@ -11,6 +12,7 @@ import {
 export async function createBackup(
   repositories: AnalyticsRepositories,
   plannerRepositories: PlannerRepositories,
+  goalRepositories: GoalRepositories,
 ): Promise<BackupEnvelope> {
   const [
     studentProfiles,
@@ -22,6 +24,7 @@ export async function createBackup(
     grades,
     tasks,
     academicEvents,
+    goals,
   ] = await Promise.all([
     repositories.profiles.list(),
     repositories.programs.list(),
@@ -32,6 +35,7 @@ export async function createBackup(
     repositories.grades.list(),
     plannerRepositories.tasks.list(),
     plannerRepositories.events.list(),
+    goalRepositories.goals.list(),
   ])
 
   return {
@@ -40,7 +44,7 @@ export async function createBackup(
       name: 'Academic OS',
     },
     database: {
-      schemaVersion: 4,
+      schemaVersion: 5,
     },
     createdAt: new Date().toISOString(),
     data: {
@@ -53,6 +57,7 @@ export async function createBackup(
       grades,
       tasks,
       academicEvents,
+      goals,
     },
   }
 }
@@ -86,6 +91,7 @@ export interface BackupPreview {
     grades: number
     tasks: number
     academicEvents: number
+    goals: number
   }
 }
 
@@ -104,6 +110,7 @@ export function inspectBackup(envelope: BackupEnvelope): BackupPreview {
       grades: envelope.data.grades.length,
       tasks: envelope.data.tasks.length,
       academicEvents: envelope.data.academicEvents.length,
+      goals: envelope.data.goals.length,
     },
   }
 }

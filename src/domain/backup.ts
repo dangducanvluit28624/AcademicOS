@@ -9,6 +9,8 @@ import type {
 } from './academic'
 import type { AcademicEvent, Task } from './planner'
 import { validateAcademicEvent, validateTask } from './planner'
+import type { AcademicGoal } from './goals'
+import { validateAcademicGoal } from './goals'
 import {
   DomainValidationError,
   validateAcademicProgram,
@@ -30,6 +32,7 @@ export interface BackupData {
   grades: Grade[]
   tasks: Task[]
   academicEvents: AcademicEvent[]
+  goals: AcademicGoal[]
 }
 
 export interface BackupEnvelope {
@@ -38,7 +41,7 @@ export interface BackupEnvelope {
     name: string
   }
   database: {
-    schemaVersion: 4
+    schemaVersion: 4 | 5
   }
   createdAt: string
   data: BackupData
@@ -59,7 +62,7 @@ export function validateBackupEnvelope(
   }
 
   const db = env.database as Record<string, unknown> | undefined
-  if (db?.schemaVersion !== 4) {
+  if (db?.schemaVersion !== 4 && db?.schemaVersion !== 5) {
     throw new DomainValidationError(
       `Unsupported database schema version: ${db?.schemaVersion}`,
     )
@@ -83,6 +86,7 @@ export function validateBackupEnvelope(
 }
 
 export function validateBackupData(data: BackupData): void {
+  data.goals = data.goals || []
   if (!Array.isArray(data.studentProfiles))
     throw new DomainValidationError('studentProfiles must be an array')
   if (!Array.isArray(data.academicPrograms))
@@ -101,6 +105,8 @@ export function validateBackupData(data: BackupData): void {
     throw new DomainValidationError('tasks must be an array')
   if (!Array.isArray(data.academicEvents))
     throw new DomainValidationError('academicEvents must be an array')
+  if (!Array.isArray(data.goals))
+    throw new DomainValidationError('goals must be an array')
 
   data.studentProfiles.forEach((profile) => {
     try {
@@ -191,6 +197,16 @@ export function validateBackupData(data: BackupData): void {
       )
     }
   })
+
+  data.goals.forEach((goal) => {
+    try {
+      validateAcademicGoal(goal)
+    } catch (e) {
+      throw new DomainValidationError(
+        `Invalid academic goal ${goal.id}: ${e instanceof Error ? e.message : 'Unknown error'}`,
+      )
+    }
+  })
 }
 
 export function validateCrossReferences(data: BackupData): void {
@@ -252,6 +268,17 @@ export function validateCrossReferences(data: BackupData): void {
     if (event.subjectId && !subjectIds.has(event.subjectId)) {
       throw new DomainValidationError(
         `Academic event ${event.id} references missing subject ${event.subjectId}`,
+      )
+    }
+  })
+
+  data.goals.forEach((goal) => {
+    if (
+      goal.academicProgramId &&
+      !academicProgramIds.has(goal.academicProgramId)
+    ) {
+      throw new DomainValidationError(
+        `Academic goal ${goal.id} references missing academic program ${goal.academicProgramId}`,
       )
     }
   })

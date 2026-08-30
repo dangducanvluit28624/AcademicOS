@@ -17,6 +17,7 @@ import {
   IndexedDbTaskRepository,
   IndexedDbAcademicEventRepository,
 } from '../../src/infrastructure/persistence/plannerRepositories'
+import { IndexedDbGoalsRepository } from '../../src/infrastructure/persistence/goalRepositories'
 import { createBackup, restoreBackup } from '../../src/application/backup'
 
 describe('M5 Backup and Restore Integration', () => {
@@ -53,6 +54,7 @@ describe('M5 Backup and Restore Integration', () => {
       grades,
     }
     const plannerRepositories = { tasks, events, subjects }
+    const goalRepositories = { goals: new IndexedDbGoalsRepository(database) }
 
     // Seed Data
     await profiles.save({ id: 'prof-1', name: 'Alice', overallGpa: 3.5 })
@@ -97,7 +99,11 @@ describe('M5 Backup and Restore Integration', () => {
     })
 
     // Create Backup
-    const backup = await createBackup(repositories, plannerRepositories)
+    const backup = await createBackup(
+      repositories,
+      plannerRepositories,
+      goalRepositories,
+    )
 
     // Verify backup contents
     expect(backup.formatVersion).toBe(1)
@@ -157,10 +163,15 @@ describe('M5 Backup and Restore Integration', () => {
       grades,
     }
     const plannerRepositories = { tasks, events, subjects }
+    const goalRepositories = { goals: new IndexedDbGoalsRepository(database) }
 
     await profiles.save({ id: 'prof-1', name: 'Original', overallGpa: 3.0 })
 
-    const backup = await createBackup(repositories, plannerRepositories)
+    const backup = await createBackup(
+      repositories,
+      plannerRepositories,
+      goalRepositories,
+    )
 
     // Corrupt the backup manually for testing failure
     // Adding a grade that refers to a missing enrollment

@@ -4,3 +4,5 @@ export * from './grading'
 export * from './planner'
 export * from './validation'
 export * from './backup'
+
+export * from './goals'

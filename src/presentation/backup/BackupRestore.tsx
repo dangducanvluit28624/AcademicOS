@@ -3,6 +3,7 @@ import type {
   AnalyticsRepositories,
   PlannerRepositories,
 } from '../../application'
+import type { GoalRepositories } from '../../application/ports/goalRepositories'
 import {
   createBackup,
   validateBackup,
@@ -16,6 +17,7 @@ import type { PersistenceDatabase } from '../../application/ports/persistence'
 export interface BackupRestoreProps {
   repositories: AnalyticsRepositories
   plannerRepositories: PlannerRepositories
+  goalRepositories: GoalRepositories
   database: PersistenceDatabase
   onRestoreComplete: () => Promise<void>
 }
@@ -23,6 +25,7 @@ export interface BackupRestoreProps {
 export function BackupRestore({
   repositories,
   plannerRepositories,
+  goalRepositories,
   database,
   onRestoreComplete,
 }: BackupRestoreProps) {
@@ -32,7 +35,11 @@ export function BackupRestore({
 
   async function handleExport() {
     try {
-      const backup = await createBackup(repositories, plannerRepositories)
+      const backup = await createBackup(
+        repositories,
+        plannerRepositories,
+        goalRepositories,
+      )
       const blob = new Blob([JSON.stringify(backup, null, 2)], {
         type: 'application/json',
       })
@@ -133,6 +140,7 @@ export function BackupRestore({
               <li>Grades: {preview.counts.grades}</li>
               <li>Tasks: {preview.counts.tasks}</li>
               <li>Academic events: {preview.counts.academicEvents}</li>
+              <li>Goals: {preview.counts.goals}</li>
             </ul>
 
             <div role="alert" style={{ color: 'red', fontWeight: 'bold' }}>

@@ -8,7 +8,7 @@ test('manages persisted Planner tasks and academic events', async ({
 
   await page.evaluate(async () => {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('academic-os', 4)
+      const request = indexedDB.open('academic-os', 5)
       request.onerror = () => reject(request.error)
       request.onsuccess = () => {
         const database = request.result

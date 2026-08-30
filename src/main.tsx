@@ -17,6 +17,7 @@ import {
   IndexedDbAcademicEventRepository,
   IndexedDbTaskRepository,
 } from './infrastructure/persistence/plannerRepositories'
+import { IndexedDbGoalsRepository } from './infrastructure/persistence/goalRepositories'
 
 async function startApplication() {
   const database = new IndexedDbDatabase()
@@ -38,12 +39,16 @@ async function startApplication() {
     ),
     subjects: repositories.subjects,
   }
+  const goalRepositories = {
+    goals: new IndexedDbGoalsRepository(database),
+  }
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App
         repositories={repositories}
         plannerRepositories={plannerRepositories}
+        goalRepositories={goalRepositories}
         database={database}
         planner={<Planner repositories={plannerRepositories} />}
       />

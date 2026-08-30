@@ -11,7 +11,7 @@ test('creates and restores a local backup deterministically', async ({
   // 1. Initialize deterministic test database directly
   await page.evaluate(async () => {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('academic-os', 4)
+      const request = indexedDB.open('academic-os', 5)
       request.onerror = () => reject(request.error)
       request.onsuccess = () => {
         const database = request.result
