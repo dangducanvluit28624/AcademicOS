@@ -4,6 +4,7 @@ test('manages persisted Planner tasks and academic events', async ({
   page,
 }) => {
   await page.goto('/')
+  await page.getByRole('link', { name: 'Planner' }).click()
   await expect(page.getByRole('heading', { name: 'Planner' })).toBeVisible()
 
   await page.evaluate(async () => {
@@ -28,6 +29,7 @@ test('manages persisted Planner tasks and academic events', async ({
   })
 
   await page.reload()
+  await page.getByRole('link', { name: 'Planner' }).click()
   await expect(page.getByRole('heading', { name: 'Planner' })).toBeVisible()
 
   const now = new Date()
@@ -69,6 +71,7 @@ test('manages persisted Planner tasks and academic events', async ({
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
 
   await page.reload()
+  await page.getByRole('link', { name: 'Planner' }).click()
   await expect(page.getByText('Read updated planner chapter')).toBeVisible()
   await expect(page.getByText('Planner Mathematics exam')).toBeVisible()
 

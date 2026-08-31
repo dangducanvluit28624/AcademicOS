@@ -23,6 +23,7 @@ export interface AcademicProgram {
   major?: string
   totalRequiredCredits?: number
   programVersion?: string
+  archived?: boolean
 }
 
 export interface AcademicYear {
@@ -48,6 +49,7 @@ export interface Subject {
   description?: string
   prerequisiteSubjectIds?: EntityId[]
   academicProgramId?: EntityId
+  archived?: boolean
 }
 
 export interface Enrollment {

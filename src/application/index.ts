@@ -7,3 +7,4 @@ export * from './ports/persistence'
 
 export * from './ports/goalRepositories'
 export * from './goals'
+export * from './academicServices'

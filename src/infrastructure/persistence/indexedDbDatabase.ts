@@ -95,6 +95,13 @@ export class IndexedDbDatabase implements PersistenceDatabase {
     )
   }
 
+  async delete(storeName: AcademicStoreName, id: string): Promise<void> {
+    await this.open()
+    await this.request<undefined>(storeName, 'readwrite', (store) =>
+      store.delete(id),
+    )
+  }
+
   async replaceData(data: Record<string, unknown[]>): Promise<void> {
     await this.open()
     if (!this.connection) throw new Error('Database is not open')

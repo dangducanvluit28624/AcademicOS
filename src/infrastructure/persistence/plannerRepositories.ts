@@ -24,6 +24,9 @@ export class IndexedDbTaskRepository implements TaskRepository {
       throw new Error(`Subject ${task.subjectId} does not exist`)
     await this.database.save('tasks', task)
   }
+  async delete(id: string) {
+    await this.database.delete('tasks', id)
+  }
 }
 
 export class IndexedDbAcademicEventRepository implements AcademicEventRepository {
@@ -42,5 +45,8 @@ export class IndexedDbAcademicEventRepository implements AcademicEventRepository
     if (event.subjectId && !(await this.subjects.get(event.subjectId)))
       throw new Error(`Subject ${event.subjectId} does not exist`)
     await this.database.save('academicEvents', event)
+  }
+  async delete(id: string) {
+    await this.database.delete('academicEvents', id)
   }
 }

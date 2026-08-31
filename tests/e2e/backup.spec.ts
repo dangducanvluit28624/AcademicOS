@@ -103,6 +103,7 @@ test('creates and restores a local backup deterministically', async ({
   await expect(page.getByText('Official GPA: 3.8')).toBeVisible()
 
   // 2. Create Backup (Download)
+  await page.getByRole('link', { name: 'Backup/Restore' }).click()
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Create Backup' }).click()
   const download = await downloadPromise
@@ -115,13 +116,17 @@ test('creates and restores a local backup deterministically', async ({
   expect(backup.data.studentProfiles[0].name).toBe('Backup Test Student')
 
   // 3. Modify current records
+  await page.getByRole('link', { name: 'Academics' }).click()
+  await page.getByRole('link', { name: 'Profile' }).click()
   await page.getByLabel('Student name').fill('Modified Student')
   await page.getByLabel('Overall GPA').fill('2.5')
   await page.getByRole('button', { name: 'Save profile' }).click()
+  await page.getByRole('link', { name: 'Dashboard' }).click()
   await expect(page.getByText('Official GPA: 2.5')).toBeVisible()
 
   // 4. Import backup
   // We click the input element. But since it's an input type=file, Playwright usually uses setInputFiles directly.
+  await page.getByRole('link', { name: 'Backup/Restore' }).click()
   const fileInput = page.getByLabel('Choose Backup File')
 
   // We can write the downloaded file to a known location to upload it.
@@ -140,6 +145,7 @@ test('creates and restores a local backup deterministically', async ({
 
   // 7. Verify academic records & Planner records
   // Since restore calls reload(), we check that the old data is back.
+  await page.getByRole('link', { name: 'Dashboard' }).click()
   await expect(page.getByText('Official GPA: 3.8')).toBeVisible()
   await expect(page.getByText('Official GPA: 3.8')).toBeVisible()
   await expect(page.getByText('Calculated GPA: 4.00')).toBeVisible() // 9 = A = 4.0
@@ -148,6 +154,7 @@ test('creates and restores a local backup deterministically', async ({
   await page.reload()
   await expect(page.getByText('Official GPA: 3.8')).toBeVisible()
 
+  await page.getByRole('link', { name: 'Planner' }).click()
   await page.getByRole('button', { name: 'All' }).click()
   await expect(page.getByText('Backup Task')).toBeVisible()
   await expect(page.getByText('Backup Event')).toBeVisible()
@@ -162,6 +169,7 @@ test('rejects an invalid backup file', async ({ page }) => {
   const tempFile = path.join(process.cwd(), 'invalid-backup.json')
   fs.writeFileSync(tempFile, JSON.stringify({ invalid: 'data' }))
 
+  await page.getByRole('link', { name: 'Backup/Restore' }).click()
   const fileInput = page.getByLabel('Choose Backup File')
   await fileInput.setInputFiles(tempFile)
 

@@ -39,6 +39,9 @@ export class IndexedDbStudentProfileRepository implements StudentProfileReposito
     validateStudentProfile(profile)
     await this.database.save('studentProfiles', profile)
   }
+  async delete(id: string) {
+    await this.database.delete('studentProfiles', id)
+  }
 }
 
 export class IndexedDbAcademicProgramRepository implements AcademicProgramRepository {
@@ -53,6 +56,9 @@ export class IndexedDbAcademicProgramRepository implements AcademicProgramReposi
     validateAcademicProgram(program)
     await this.database.save('academicPrograms', program)
   }
+  async delete(id: string) {
+    await this.database.delete('academicPrograms', id)
+  }
 }
 
 export class IndexedDbAcademicYearRepository implements AcademicYearRepository {
@@ -66,6 +72,9 @@ export class IndexedDbAcademicYearRepository implements AcademicYearRepository {
   async save(year: AcademicYear) {
     validateAcademicYear(year)
     await this.database.save('academicYears', year)
+  }
+  async delete(id: string) {
+    await this.database.delete('academicYears', id)
   }
 }
 
@@ -88,6 +97,9 @@ export class IndexedDbSemesterRepository implements SemesterRepository {
       throw new Error(`Academic year ${semester.academicYearId} does not exist`)
     }
     await this.database.save('semesters', semester)
+  }
+  async delete(id: string) {
+    await this.database.delete('semesters', id)
   }
 }
 
@@ -113,6 +125,9 @@ export class IndexedDbSubjectRepository implements SubjectRepository {
       )
     }
     await this.database.save('subjects', subject)
+  }
+  async delete(id: string) {
+    await this.database.delete('subjects', id)
   }
 }
 
@@ -155,6 +170,9 @@ export class IndexedDbEnrollmentRepository implements EnrollmentRepository {
     }
     await this.database.save('enrollments', enrollment)
   }
+  async delete(id: string) {
+    await this.database.delete('enrollments', id)
+  }
 }
 
 export class IndexedDbGradeRepository implements GradeRepository {
@@ -173,5 +191,8 @@ export class IndexedDbGradeRepository implements GradeRepository {
       throw new Error(`Enrollment ${grade.enrollmentId} does not exist`)
     }
     await this.database.save('grades', grade)
+  }
+  async delete(id: string) {
+    await this.database.delete('grades', id)
   }
 }

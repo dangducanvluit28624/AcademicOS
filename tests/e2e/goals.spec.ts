@@ -6,23 +6,30 @@ test.describe('M6 Goals & Graduation Progress', () => {
     await page.goto('/')
 
     // Fill in basic academic data to derive progress
+    await page.getByRole('link', { name: 'Academics' }).click()
+    await page.getByRole('link', { name: 'Profile' }).click()
     await page.getByLabel('Student name').fill('John Doe')
     await page.getByRole('button', { name: 'Save profile' }).click()
 
+    await page.getByRole('link', { name: 'Programs' }).click()
     await page.getByLabel('Program name').fill('Computer Science')
     await page.getByRole('button', { name: 'Save program' }).click()
 
+    await page.getByRole('link', { name: 'Subjects' }).click()
     await page.getByLabel('Subject name').fill('Intro to Programming')
     await page.getByLabel('Subject credits').fill('3')
     await page.getByRole('button', { name: 'Save subject' }).click()
 
-    await page.getByLabel('Academic year').fill('2024')
+    await page.getByRole('link', { name: 'Years' }).click()
+    await page.getByLabel('Academic year label').fill('2024')
     await page.getByRole('button', { name: 'Save year' }).click()
 
+    await page.getByRole('link', { name: 'Semesters' }).click()
     await page.getByLabel('Semester name').fill('Fall 2024')
     await page.getByLabel('Semester year').selectOption({ label: '2024' })
     await page.getByRole('button', { name: 'Save semester' }).click()
 
+    await page.getByRole('link', { name: 'Enrollments' }).click()
     await page
       .getByLabel('Enrollment subject')
       .selectOption({ label: 'Intro to Programming' })
@@ -33,12 +40,14 @@ test.describe('M6 Goals & Graduation Progress', () => {
     await page.getByRole('button', { name: 'Save enrollment' }).click()
 
     // Add a finalized grade to make it available
+    await page.getByRole('link', { name: 'Grades' }).click()
     await page.getByLabel('Grade enrollment').selectOption({ index: 1 })
     await page.getByLabel('Course score').fill('9')
     await page.getByLabel('Grade finalized').check()
     await page.getByRole('button', { name: 'Save grade' }).click()
 
     // Now let's create a goal
+    await page.getByRole('link', { name: 'Goals' }).click()
     await page.getByRole('button', { name: 'Create Goal' }).click()
 
     // Fill the goal form
@@ -66,6 +75,7 @@ test.describe('M6 Goals & Graduation Progress', () => {
     ).toContainText('In Progress')
 
     // Create a backup
+    await page.getByRole('link', { name: 'Backup/Restore' }).click()
     const downloadPromise = page.waitForEvent('download')
     await page.getByRole('button', { name: 'Create Backup' }).click()
     const download = await downloadPromise
@@ -73,6 +83,7 @@ test.describe('M6 Goals & Graduation Progress', () => {
     expect(path).toBeTruthy()
 
     // Archive the goal
+    await page.getByRole('link', { name: 'Goals' }).click()
     await page
       .getByRole('button', { name: 'Archive', exact: true })
       .first()
@@ -88,6 +99,7 @@ test.describe('M6 Goals & Graduation Progress', () => {
     ).toBeVisible()
 
     // Restore the backup
+    await page.getByRole('link', { name: 'Backup/Restore' }).click()
     await page.locator('input[type="file"]').setInputFiles(path)
     await expect(
       page.getByRole('heading', { name: 'Restore Preview' }),
@@ -100,6 +112,7 @@ test.describe('M6 Goals & Graduation Progress', () => {
 
     // After restoring, the goal should be back to active (because the backup was taken before archiving)
     await page.reload()
+    await page.getByRole('link', { name: 'Goals' }).click()
     await expect(
       page.getByRole('listitem').filter({ hasText: 'First Semester Credits' }),
     ).toBeVisible()
