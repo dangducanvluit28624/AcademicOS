@@ -12,6 +12,13 @@ import {
 } from '../../application/goals'
 import type { GoalProgress, GraduationProgress } from '../../application/goals'
 import { GoalForm } from './GoalForm'
+import { Card } from '../components/Card'
+import { Button } from '../components/Button'
+import { StatusBadge } from '../components/Badge'
+import { PageHeader } from '../components/PageHeader'
+import { ProgressBar } from '../components/ProgressBar'
+import { EmptyState } from '../components/EmptyState'
+import { Target, GraduationCap, Plus, Archive, Edit2 } from 'lucide-react'
 
 export interface GoalsDashboardProps {
   goalRepositories: GoalRepositories
@@ -107,102 +114,237 @@ export function GoalsDashboard({
   )
 
   return (
-    <div aria-labelledby="goals-heading">
-      <h2 id="goals-heading">Goals & Graduation Progress</h2>
+    <section aria-labelledby="goals-heading" className="space-y-6">
+      <PageHeader
+        id="goals-heading"
+        title="Goals & Graduation Progress"
+        subtitle="Track cumulative milestones, benchmark GPA targets, and monitor degree completion requirements."
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setShowArchived(!showArchived)}
+              icon={<Archive className="w-4 h-4" />}
+            >
+              {showArchived ? 'Show Active' : 'Show Archived'}
+            </Button>
+            {!showArchived && (
+              <Button
+                variant="primary"
+                onClick={() => setIsCreating(true)}
+                icon={<Plus className="w-4 h-4" />}
+              >
+                Create Goal
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {error && (
-        <div role="alert" style={{ color: 'red' }}>
+        <div
+          role="alert"
+          className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"
+        >
           {error}
         </div>
       )}
 
-      <section>
-        <h3>Graduation Progress (Primary Program)</h3>
+      {/* Graduation Progress Banner Card */}
+      <Card
+        title="Graduation Progress (Primary Program)"
+        subtitle={
+          programs[0]
+            ? `Degree program: ${programs[0].name}`
+            : 'No primary degree program selected'
+        }
+        icon={<GraduationCap className="w-4 h-4 text-indigo-600" />}
+      >
         {gradProgress ? (
-          <div>
-            <p>
-              Status:{' '}
-              <span>
-                {gradProgress.status === 'Available'
-                  ? 'Available'
-                  : gradProgress.status}
-              </span>
-            </p>
-            <p>Completed Credits: {gradProgress.completedCredits}</p>
-            {gradProgress.requiredCredits !== undefined && (
-              <>
-                <p>Required Credits: {gradProgress.requiredCredits}</p>
-                <p>Remaining Credits: {gradProgress.remainingCredits}</p>
-                <p>
-                  Completion: {gradProgress.completionPercentage?.toFixed(1)}%
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                <p className="text-xs text-slate-500 mb-1">
+                  Status:{' '}
+                  <span className="font-semibold text-slate-800">
+                    {gradProgress.status === 'Available'
+                      ? 'Available'
+                      : gradProgress.status}
+                  </span>
                 </p>
-              </>
-            )}
+                <StatusBadge status={gradProgress.status} />
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                <p className="text-xs text-slate-500 mb-1 font-semibold">
+                  Completed Credits: {gradProgress.completedCredits}
+                </p>
+                <p className="text-xl font-bold text-emerald-700 font-mono">
+                  {gradProgress.completedCredits} credits
+                </p>
+              </div>
+
+              {gradProgress.requiredCredits !== undefined && (
+                <>
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                    <p className="text-xs text-slate-500 mb-1 font-semibold">
+                      Required Credits: {gradProgress.requiredCredits}
+                    </p>
+                    <p className="text-xs text-slate-600">
+                      Remaining Credits: {gradProgress.remainingCredits}
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                    <p className="text-xs text-slate-500 mb-1 font-semibold">
+                      Completion:{' '}
+                      {gradProgress.completionPercentage?.toFixed(1)}%
+                    </p>
+                    <ProgressBar
+                      value={gradProgress.completionPercentage ?? 0}
+                      size="sm"
+                      variant="success"
+                      showPercentage={false}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         ) : (
-          <p>No primary program found.</p>
-        )}
-      </section>
-
-      <section>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <h3>{showArchived ? 'Archived Goals' : 'Active Goals'}</h3>
-          <div>
-            <button onClick={() => setShowArchived(!showArchived)}>
-              {showArchived ? 'Show Active' : 'Show Archived'}
-            </button>
-            <button onClick={() => setIsCreating(true)}>Create Goal</button>
-          </div>
-        </div>
-
-        {(isCreating || editingGoal) && (
-          <GoalForm
-            programs={programs}
-            initialGoal={editingGoal ?? undefined}
-            onSave={handleSaveGoal}
-            onCancel={() => {
-              setIsCreating(false)
-              setEditingGoal(null)
-            }}
+          <EmptyState
+            title="No primary program found"
+            description="Register a degree program in Academics > Programs to unlock degree progression tracking."
+            icon={<GraduationCap className="w-8 h-8 text-slate-400" />}
           />
         )}
+      </Card>
 
-        <ul>
-          {visibleGoals.map(({ goal, status, currentValue, achieved }) => {
-            const derivedStatus = getStatusText({
-              goal,
-              status,
-              currentValue,
-              achieved,
-            })
-            return (
-              <li key={goal.id}>
-                <h4>{goal.title}</h4>
-                <p>Type: {goal.targetType}</p>
-                <p>Target: {goal.targetValue}</p>
-                <p>
-                  Current:{' '}
-                  {status === 'Available' ? currentValue.toFixed(2) : 'N/A'}
-                </p>
-                <p>
-                  Data Quality: <span>{status}</span>
-                </p>
-                <p>
-                  Goal Status: <span>{derivedStatus}</span>
-                </p>
-                {goal.status === 'active' && (
-                  <div>
-                    <button onClick={() => setEditingGoal(goal)}>Edit</button>
-                    <button onClick={() => void handleArchive(goal.id)}>
-                      Archive
-                    </button>
+      {/* Goal Form Modal/Inline */}
+      {(isCreating || editingGoal) && (
+        <GoalForm
+          programs={programs}
+          initialGoal={editingGoal ?? undefined}
+          onSave={handleSaveGoal}
+          onCancel={() => {
+            setIsCreating(false)
+            setEditingGoal(null)
+          }}
+        />
+      )}
+
+      {/* Goals List Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <Target className="w-4 h-4 text-indigo-600" />
+            {showArchived ? 'Archived Goals' : 'Active Goals'}
+          </h3>
+          <span className="text-xs text-slate-500 font-medium">
+            {visibleGoals.length} goal(s)
+          </span>
+        </div>
+
+        {visibleGoals.length > 0 ? (
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 list-none m-0 p-0">
+            {visibleGoals.map(({ goal, status, currentValue, achieved }) => {
+              const derivedStatus = getStatusText({
+                goal,
+                status,
+                currentValue,
+                achieved,
+              })
+
+              const progressPct =
+                goal.targetValue > 0
+                  ? Math.min((currentValue / goal.targetValue) * 100, 100)
+                  : 0
+
+              return (
+                <li
+                  key={goal.id}
+                  className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3 flex flex-col justify-between"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="text-sm font-bold text-slate-800 tracking-tight">
+                        {goal.title}
+                      </h4>
+                      <StatusBadge status={derivedStatus} />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                      <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                        <p className="text-[11px] text-slate-400 uppercase font-semibold">
+                          Type: {goal.targetType}
+                        </p>
+                        <p className="font-mono font-bold text-slate-800 mt-0.5">
+                          Target: {goal.targetValue}
+                        </p>
+                      </div>
+
+                      <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                        <p className="text-[11px] text-slate-400 uppercase font-semibold">
+                          Data Quality:{' '}
+                          <span className="font-bold">{status}</span>
+                        </p>
+                        <p className="font-mono font-bold text-indigo-700 mt-0.5">
+                          Current:{' '}
+                          {status === 'Available'
+                            ? currentValue.toFixed(2)
+                            : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-xs text-slate-500">
+                        Goal Status:{' '}
+                        <span className="font-semibold">{derivedStatus}</span>
+                      </p>
+                      {status === 'Available' && (
+                        <ProgressBar
+                          value={progressPct}
+                          size="sm"
+                          variant={achieved ? 'success' : 'primary'}
+                          showPercentage={false}
+                        />
+                      )}
+                    </div>
                   </div>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-    </div>
+
+                  {goal.status === 'active' && (
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setEditingGoal(goal)}
+                        icon={<Edit2 className="w-3 h-3" />}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => void handleArchive(goal.id)}
+                        icon={<Archive className="w-3 h-3" />}
+                      >
+                        Archive
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <EmptyState
+            title={showArchived ? 'No archived goals' : 'No active goals'}
+            description="Establish graduation targets or semester GPA milestones to measure your performance."
+            icon={<Target className="w-8 h-8 text-slate-400" />}
+          />
+        )}
+      </div>
+    </section>
   )
 }

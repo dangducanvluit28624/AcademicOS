@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+@layer base {
+  :root {
+    --font-sans:
+      'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      Roboto, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: #1e293b;
+    background-color: #f8fafc;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Accessible and clean focus states */
+  :focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+}

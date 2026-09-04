@@ -4,6 +4,11 @@ import type {
   GoalTargetType,
   AcademicProgram,
 } from '../../domain'
+import { Card } from '../components/Card'
+import { Button } from '../components/Button'
+import { Input } from '../components/Input'
+import { Select } from '../components/Select'
+import { Target, Save, X } from 'lucide-react'
 
 export interface GoalFormProps {
   programs: AcademicProgram[]
@@ -54,77 +59,101 @@ export function GoalForm({
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)}>
-      <h3>{initialGoal ? 'Edit Goal' : 'Create Goal'}</h3>
-      {error && (
-        <div role="alert" style={{ color: 'red' }}>
-          {error}
-        </div>
-      )}
-
-      <div>
-        <label htmlFor="title">Goal Title</label>
-        <input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="targetType">Goal Type</label>
-        <select
-          id="targetType"
-          value={targetType}
-          onChange={(e) => setTargetType(e.target.value as GoalTargetType)}
-        >
-          <option value="gpa">GPA</option>
-          <option value="credits">Credits</option>
-          <option value="graduation-credits">
-            Graduation (Program Credits)
-          </option>
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="targetValue">Target Value</label>
-        <input
-          id="targetValue"
-          type="number"
-          step="0.01"
-          min="0"
-          value={targetValue}
-          onChange={(e) => setTargetValue(e.target.value)}
-          required
-        />
-      </div>
-
-      {targetType === 'graduation-credits' && (
-        <div>
-          <label htmlFor="academicProgramId">Academic Program</label>
-          <select
-            id="academicProgramId"
-            value={academicProgramId}
-            onChange={(e) => setAcademicProgramId(e.target.value)}
-            required
+    <Card
+      title={initialGoal ? 'Edit Goal' : 'Create Academic Goal'}
+      subtitle="Define target thresholds for cumulative GPA, credits, or degree milestones"
+      icon={<Target className="w-4 h-4 text-indigo-600" />}
+      className="mb-6 border-indigo-200/80 shadow-xs"
+    >
+      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+        <h3 className="sr-only">{initialGoal ? 'Edit Goal' : 'Create Goal'}</h3>
+        {error && (
+          <div
+            role="alert"
+            className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"
           >
-            <option value="">Select a program</option>
-            {programs.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+            {error}
+          </div>
+        )}
 
-      <div>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
-        <button type="submit">Save Goal</button>
-      </div>
-    </form>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            id="title"
+            label="Goal Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Dean's List GPA Target"
+            required
+          />
+
+          <Select
+            id="targetType"
+            label="Goal Type"
+            value={targetType}
+            onChange={(e) => setTargetType(e.target.value as GoalTargetType)}
+          >
+            <option value="gpa">GPA</option>
+            <option value="credits">Credits</option>
+            <option value="graduation-credits">
+              Graduation (Program Credits)
+            </option>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            id="targetValue"
+            label="Target Value"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="e.g. 3.8 or 120"
+            value={targetValue}
+            onChange={(e) => setTargetValue(e.target.value)}
+            required
+            helperText={
+              targetType === 'gpa'
+                ? 'Target GPA on 4.0 scale (e.g. 3.80)'
+                : 'Target credit hours'
+            }
+          />
+
+          {targetType === 'graduation-credits' && (
+            <Select
+              id="academicProgramId"
+              label="Academic Program"
+              value={academicProgramId}
+              onChange={(e) => setAcademicProgramId(e.target.value)}
+              required
+            >
+              <option value="">Select a program</option>
+              {programs.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 pt-2">
+          <Button
+            type="submit"
+            variant="primary"
+            icon={<Save className="w-4 h-4" />}
+          >
+            Save Goal
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
+            icon={<X className="w-4 h-4" />}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Card>
   )
 }

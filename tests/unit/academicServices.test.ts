@@ -89,16 +89,14 @@ describe('AcademicService', () => {
     })
 
     it('prevents deleting subject if referenced by enrollment', async () => {
-      mockAcademicRepos.enrollments.list = vi
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'e1',
-            subjectId: '1',
-            semesterId: 's1',
-            status: 'planned',
-          } as Enrollment,
-        ])
+      mockAcademicRepos.enrollments.list = vi.fn().mockResolvedValue([
+        {
+          id: 'e1',
+          subjectId: '1',
+          semesterId: 's1',
+          status: 'planned',
+        } as Enrollment,
+      ])
       await expect(academicService.deleteSubject('1')).rejects.toThrow(
         'Cannot delete subject because it is referenced by one or more enrollments',
       )
@@ -106,16 +104,14 @@ describe('AcademicService', () => {
 
     it('prevents deleting subject if referenced by tasks', async () => {
       mockAcademicRepos.enrollments.list = vi.fn().mockResolvedValue([])
-      mockPlannerRepos.tasks.list = vi
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 't1',
-            title: 'Task',
-            subjectId: '1',
-            status: 'pending',
-          } as Task,
-        ])
+      mockPlannerRepos.tasks.list = vi.fn().mockResolvedValue([
+        {
+          id: 't1',
+          title: 'Task',
+          subjectId: '1',
+          status: 'pending',
+        } as Task,
+      ])
       await expect(academicService.deleteSubject('1')).rejects.toThrow(
         'Cannot delete subject because it is referenced by one or more tasks',
       )
@@ -132,14 +128,12 @@ describe('AcademicService', () => {
 
   describe('Enrollments', () => {
     it('prevents new enrollments for archived subjects', async () => {
-      mockAcademicRepos.subjects.get = vi
-        .fn()
-        .mockResolvedValue({
-          id: 'sub1',
-          name: 'Math',
-          credits: 3,
-          archived: true,
-        } as Subject)
+      mockAcademicRepos.subjects.get = vi.fn().mockResolvedValue({
+        id: 'sub1',
+        name: 'Math',
+        credits: 3,
+        archived: true,
+      } as Subject)
       mockAcademicRepos.enrollments.list = vi.fn().mockResolvedValue([])
 
       const newEnrollment: Enrollment = {
@@ -156,24 +150,20 @@ describe('AcademicService', () => {
     })
 
     it('allows editing an existing enrollment for an archived subject', async () => {
-      mockAcademicRepos.enrollments.list = vi
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'e1',
-            subjectId: 'sub1',
-            semesterId: 'sem1',
-            status: 'planned',
-          },
-        ])
-      mockAcademicRepos.subjects.get = vi
-        .fn()
-        .mockResolvedValue({
-          id: 'sub1',
-          name: 'Math',
-          credits: 3,
-          archived: true,
-        } as Subject)
+      mockAcademicRepos.enrollments.list = vi.fn().mockResolvedValue([
+        {
+          id: 'e1',
+          subjectId: 'sub1',
+          semesterId: 'sem1',
+          status: 'planned',
+        },
+      ])
+      mockAcademicRepos.subjects.get = vi.fn().mockResolvedValue({
+        id: 'sub1',
+        name: 'Math',
+        credits: 3,
+        archived: true,
+      } as Subject)
 
       const updateEnrollment: Enrollment = {
         id: 'e1',
@@ -192,16 +182,14 @@ describe('AcademicService', () => {
 
   describe('Semesters', () => {
     it('prevents deleting semester if referenced by enrollments', async () => {
-      mockAcademicRepos.enrollments.list = vi
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'e1',
-            subjectId: 'sub1',
-            semesterId: 'sem1',
-            status: 'planned',
-          } as Enrollment,
-        ])
+      mockAcademicRepos.enrollments.list = vi.fn().mockResolvedValue([
+        {
+          id: 'e1',
+          subjectId: 'sub1',
+          semesterId: 'sem1',
+          status: 'planned',
+        } as Enrollment,
+      ])
       await expect(academicService.deleteSemester('sem1')).rejects.toThrow(
         'Cannot delete semester because it is referenced by one or more enrollments',
       )
